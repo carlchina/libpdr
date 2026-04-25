@@ -211,17 +211,18 @@ void SOAP::fn(struct mg_connection* c, int ev, void* ev_data) {
         if (mg_strcasecmp(hm->method, mg_str("GET")) == 0) {
             if (mg_strcmp(hm->uri, mg_str("/")) == 0) {
                 return mg_http_reply(c, 200, "", "Portable DLNA Renderer");
-            } else if (mg_strcmp(hm->uri, mg_str("/description.xml")) == 0) {
-                return mg_http_reply(c, 200, xmlHeader().c_str(),
+            }
+            if (mg_strcmp(hm->uri, mg_str("/description.xml")) == 0) {
+                return mg_http_reply(c, 200, xmlHeader().c_str(), "%s",
                                      soap->device.getString().c_str());
-            } else {
-                for (auto& service : soap->device.getServiceList()) {
-                    std::string link = "/" + service.first + ".xml";
-                    if (mg_strcmp(hm->uri, mg_str(link.c_str())) == 0) {
-                        return mg_http_reply(
-                            c, 200, xmlHeader().c_str(),
-                            soap->device.getString(service.first).c_str());
-                    }
+            }
+
+            for (auto& service : soap->device.getServiceList()) {
+                std::string link = "/" + service.first + ".xml";
+                if (mg_strcmp(hm->uri, mg_str(link.c_str())) == 0) {
+                    return mg_http_reply(
+                        c, 200, xmlHeader().c_str(), "%s",
+                        soap->device.getString(service.first).c_str());
                 }
             }
         } else if (mg_strcasecmp(hm->method, mg_str("POST")) == 0) {
@@ -231,7 +232,7 @@ void SOAP::fn(struct mg_connection* c, int ev, void* ev_data) {
                 auto res = soap->device.parseRequest(
                     service, action, std::string{hm->body.buf, hm->body.len});
                 if (!res.empty()) {
-                    return mg_http_reply(c, 200, xmlHeader().c_str(),
+                    return mg_http_reply(c, 200, xmlHeader().c_str(), "%s",
                                          res.c_str());
                 }
             } catch (const std::exception& ex) {
